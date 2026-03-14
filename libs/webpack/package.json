@@ -1,0 +1,57 @@
+{
+  "name": "@davnx/webpack",
+  "version": "1.0.0",
+  "description": "Custom Nx executors for building and serving NestJS applications with webpack",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "executors": "./executors.json",
+  "license": "MIT",
+  "author": "David Antoon <davidmantoon@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davidantoon/davnx.git",
+    "directory": "libs/webpack"
+  },
+  "homepage": "https://github.com/davidantoon/davnx/tree/main/libs/webpack#readme",
+  "bugs": {
+    "url": "https://github.com/davidantoon/davnx/issues"
+  },
+  "keywords": [
+    "nx",
+    "webpack",
+    "nestjs",
+    "executor",
+    "build",
+    "devserver",
+    "monorepo"
+  ],
+  "peerDependencies": {
+    "webpack": "^5.0.0",
+    "@nx/webpack": ">=20.0.0",
+    "@nx/devkit": ">=20.0.0"
+  },
+  "dependencies": {
+    "fork-ts-checker-webpack-plugin": "^9.0.0",
+    "glob": "^11.0.0",
+    "http-proxy": "^1.18.0",
+    "js-yaml": "^4.1.0",
+    "pino-pretty": "^13.0.0",
+    "webpack-node-externals": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/http-proxy": "^1.17.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "**/*.js.map",
+    "executors.json",
+    "README.md"
+  ]
+}

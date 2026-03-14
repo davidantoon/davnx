@@ -1,0 +1,14 @@
+{
+  "executors": {
+    "build": {
+      "implementation": "./executors/build/build.impl",
+      "schema": "./executors/build/schema.json",
+      "description": "Production webpack build for a NestJS application."
+    },
+    "serve": {
+      "implementation": "./executors/serve/serve.impl",
+      "schema": "./executors/serve/schema.json",
+      "description": "Webpack watch mode with integrated devserver for a NestJS application."
+    }
+  }
+}

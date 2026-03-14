@@ -1,0 +1,115 @@
+{
+  "version": 2,
+  "outputCapture": "direct-nodejs",
+  "title": "NestJS Webpack Build",
+  "description": "Build a NestJS application using webpack.",
+  "cli": "nx",
+  "type": "object",
+  "properties": {
+    "entryFile": {
+      "type": "string",
+      "description": "Path to the main entry-point file, relative to project root.",
+      "x-completion-type": "file",
+      "x-priority": "important",
+      "default": "./src/deployments/service/main.ts"
+    },
+    "tsConfigFile": {
+      "type": "string",
+      "description": "Path to the TypeScript configuration file, relative to project root.",
+      "x-completion-type": "file",
+      "x-priority": "important",
+      "default": "./tsconfig.app.json"
+    },
+    "outputPath": {
+      "type": "string",
+      "description": "Output directory path, relative to workspace root.",
+      "x-completion-type": "directory"
+    },
+    "assets": {
+      "type": "array",
+      "description": "List of static assets to copy.",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "additionalEntryPoints": {
+      "type": "array",
+      "description": "Additional webpack entry points.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entryName": { "type": "string" },
+          "entryPath": { "type": "string" }
+        }
+      },
+      "default": []
+    },
+    "runtimeDependencies": {
+      "type": "array",
+      "description": "Runtime dependencies to include in generated package.json.",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "ormConfigPath": {
+      "type": "string",
+      "description": "Path to ormconfig.ts relative to project root. Auto-detected from src/ormconfig.ts if not specified."
+    },
+    "migrationsDir": {
+      "type": "string",
+      "description": "Path to migrations directory relative to project root.",
+      "default": "./src/migrations"
+    },
+    "memoryLimit": {
+      "type": "number",
+      "description": "Memory limit in MB for TypeScript type checker.",
+      "default": 8192
+    },
+    "generatePackageJson": {
+      "type": "boolean",
+      "description": "Generate package.json in output.",
+      "default": true
+    },
+    "buildLibsFromSource": {
+      "type": "boolean",
+      "description": "Read buildable libraries from source.",
+      "default": false
+    },
+    "orgScopes": {
+      "type": "array",
+      "description": "Organization scopes to bundle rather than externalize (e.g. ['@myorg']). Matching packages are bundled into the webpack output.",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "bundlePackages": {
+      "type": "array",
+      "description": "Explicit package names to force-bundle into the output instead of externalizing (e.g. ['lodash', 'my-pkg']).",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "nodeExternalsConfig": {
+      "type": "object",
+      "description": "Override options for webpack-node-externals. Merged with defaults — allowlist entries are appended to orgScopes and bundlePackages.",
+      "properties": {
+        "allowlist": {
+          "type": "array",
+          "description": "Additional patterns to allowlist (bundle instead of externalize).",
+          "items": { "type": "string" }
+        },
+        "additionalModuleDirs": {
+          "type": "array",
+          "description": "Additional directories to scan for modules to externalize.",
+          "items": { "type": "string" }
+        },
+        "importType": {
+          "type": "string",
+          "description": "Module import type for externalized packages (default: 'commonjs')."
+        }
+      }
+    },
+    "webpackConfigPath": {
+      "type": "string",
+      "description": "Path to a JS/TS file (relative to project root) that exports a (config) => config function for custom webpack overrides.",
+      "x-completion-type": "file"
+    }
+  },
+  "required": ["entryFile", "tsConfigFile"]
+}

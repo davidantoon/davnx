@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "outputCapture": "direct-nodejs",
+  "continuous": true,
+  "title": "NestJS Webpack Serve",
+  "description": "Serve a NestJS application with webpack watch mode and integrated devserver.",
+  "cli": "nx",
+  "type": "object",
+  "properties": {
+    "entryFile": {
+      "type": "string",
+      "description": "Path to the main entry-point file, relative to project root.",
+      "x-completion-type": "file",
+      "x-priority": "important",
+      "default": "./src/deployments/service/main.ts"
+    },
+    "tsConfigFile": {
+      "type": "string",
+      "description": "Path to the TypeScript configuration file, relative to project root.",
+      "x-completion-type": "file",
+      "x-priority": "important",
+      "default": "./tsconfig.app.json"
+    },
+    "outputPath": {
+      "type": "string",
+      "description": "Output directory path, relative to workspace root.",
+      "x-completion-type": "directory"
+    },
+    "assets": {
+      "type": "array",
+      "description": "List of static assets to copy.",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "configEnv": {
+      "type": "string",
+      "description": "Environment name for config YAML resolution (config.{env}.yaml).",
+      "default": "development"
+    },
+    "memoryLimit": {
+      "type": "number",
+      "description": "Memory limit in MB for TypeScript type checker.",
+      "default": 8192
+    },
+    "childCount": {
+      "type": "number",
+      "description": "Number of child processes for the devserver.",
+      "default": 1
+    },
+    "buildLibsFromSource": {
+      "type": "boolean",
+      "description": "Read buildable libraries from source.",
+      "default": true
+    },
+    "orgScopes": {
+      "type": "array",
+      "description": "Organization scopes to bundle rather than externalize (e.g. ['@myorg']). Matching packages are bundled into the webpack output.",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "bundlePackages": {
+      "type": "array",
+      "description": "Explicit package names to force-bundle into the output instead of externalizing (e.g. ['lodash', 'my-pkg']).",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "nodeExternalsConfig": {
+      "type": "object",
+      "description": "Override options for webpack-node-externals. Merged with defaults — allowlist entries are appended to orgScopes and bundlePackages.",
+      "properties": {
+        "allowlist": {
+          "type": "array",
+          "description": "Additional patterns to allowlist (bundle instead of externalize).",
+          "items": { "type": "string" }
+        },
+        "additionalModuleDirs": {
+          "type": "array",
+          "description": "Additional directories to scan for modules to externalize.",
+          "items": { "type": "string" }
+        },
+        "importType": {
+          "type": "string",
+          "description": "Module import type for externalized packages (default: 'commonjs')."
+        }
+      }
+    },
+    "webpackConfigPath": {
+      "type": "string",
+      "description": "Path to a JS/TS file (relative to project root) that exports a (config) => config function for custom webpack overrides.",
+      "x-completion-type": "file"
+    }
+  },
+  "required": ["entryFile", "tsConfigFile"]
+}

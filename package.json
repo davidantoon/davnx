@@ -1,0 +1,36 @@
+{
+  "name": "@davnx/source",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Nx monorepo for @davnx packages - custom Nx executors and build tooling",
+  "license": "MIT",
+  "author": "David Antoon <davidmantoon@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davidantoon/davnx.git"
+  },
+  "homepage": "https://github.com/davidantoon/davnx#readme",
+  "bugs": {
+    "url": "https://github.com/davidantoon/davnx/issues"
+  },
+  "workspaces": ["libs/*", "apps/*"],
+  "scripts": {
+    "build": "npx nx run-many -t build",
+    "test": "npx nx run-many -t test",
+    "lint": "npx nx run-many -t lint"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@nx/devkit": "22.5.4",
+    "@nx/eslint": "22.5.4",
+    "@nx/eslint-plugin": "22.5.4",
+    "@nx/js": "22.5.4",
+    "@nx/webpack": "22.5.4",
+    "eslint": "^9.8.0",
+    "nx": "22.5.4",
+    "prettier": "~3.6.2",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.40.0",
+    "webpack": "^5.98.0"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "webpack",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/webpack/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/webpack",
+        "tsConfig": "libs/webpack/tsconfig.lib.json",
+        "main": "libs/webpack/src/index.ts",
+        "rootDir": "libs/webpack/src",
+        "assets": [
+          "libs/webpack/README.md",
+          "libs/webpack/executors.json",
+          {
+            "input": "libs/webpack",
+            "glob": "package.json",
+            "output": "."
+          },
+          {
+            "input": "libs/webpack/src",
+            "glob": "**/*.json",
+            "output": "."
+          }
+        ]
+      }
+    }
+  }
+}
