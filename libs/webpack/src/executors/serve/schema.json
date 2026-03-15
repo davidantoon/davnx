@@ -88,6 +88,10 @@
       "type": "string",
       "description": "Path to a JS/TS file (relative to project root) that exports a (config) => config function for custom webpack overrides.",
       "x-completion-type": "file"
+    },
+    "serviceName": {
+      "type": "string",
+      "description": "Service name used as the URL prefix for the devserver (e.g. 'agenshield' → /agenshield/). Overrides the value from config YAML."
     }
   },
   "required": ["entryFile", "tsConfigFile"]

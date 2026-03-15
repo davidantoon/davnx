@@ -24,6 +24,7 @@ export interface ServeExecutorOptions {
     importType?: string;
   };
   webpackConfigPath?: string;
+  serviceName?: string;
 }
 
 interface ExecutorContext {
@@ -65,6 +66,9 @@ async function* serveExecutor(
     const yamlConfig = yaml.load(fs.readFileSync(configFilePath, 'utf8')) as Record<string, unknown>;
     port = Number(yamlConfig.port) || port;
     serviceName = (yamlConfig.serviceName as string) || serviceName;
+  }
+  if (options.serviceName) {
+    serviceName = options.serviceName;
   }
 
   // Resolve entry/tsconfig relative to project root (absolute paths avoid
