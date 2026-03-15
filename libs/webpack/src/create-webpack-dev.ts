@@ -1,11 +1,11 @@
 import { NxAppWebpackPlugin } from '@nx/webpack/app-plugin';
 import * as path from 'node:path';
-import * as nodeExternals from 'webpack-node-externals';
+import nodeExternals from 'webpack-node-externals';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const webpack = require('webpack');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+// const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 export interface NodeExternalsConfig {
   allowlist?: (string | RegExp)[];

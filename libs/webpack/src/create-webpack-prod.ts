@@ -2,10 +2,10 @@ import { NxAppWebpackPlugin } from '@nx/webpack/app-plugin';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { globSync } from 'glob';
-import * as nodeExternals from 'webpack-node-externals';
+import nodeExternals from 'webpack-node-externals';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+// const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Configuration = Record<string, any>;
