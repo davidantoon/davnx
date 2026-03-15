@@ -1,6 +1,6 @@
 {
   "name": "@davnx/webpack",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Custom Nx executors for building and serving NestJS applications with webpack",
   "main": "./index.js",
   "types": "./index.d.ts",

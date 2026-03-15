@@ -15,9 +15,9 @@
   },
   "workspaces": ["libs/*", "apps/*"],
   "scripts": {
-    "build": "npx nx run-many -t build",
-    "test": "npx nx run-many -t test",
-    "lint": "npx nx run-many -t lint"
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
