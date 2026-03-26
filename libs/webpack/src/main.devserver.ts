@@ -32,7 +32,7 @@ const { prettyFactory } = require('pino-pretty');
 // ----------------------------- Shared Config ----------------------------------
 const BUNDLE_PATH = process.env.BUNDLE_PATH?.trim() || './main.js';
 const SERVICE_NAME = process.env.SERVICE_NAME || '';
-const SERVICE_PREFIX = SERVICE_NAME ? `/${SERVICE_NAME}` : '';
+const SERVICE_PREFIX = process.env.SERVE_PREFIX ? `/${process.env.SERVE_PREFIX}` : '';
 
 // ----------------------------- Socket Helpers ---------------------------------
 const SOCK_DIR = path.join(os.tmpdir(), `${SERVICE_NAME || 'agencloud'}-devserver`);
@@ -77,6 +77,7 @@ if (process.env.APP_RUNNER === '1') {
   (async () => {
     let current: BuiltChildApp | null = null;
     let swapping = false;
+    let pendingReload = false;
 
     // Delegate starts as 503; swapped to the real handler after first boot
     let delegate: http.RequestListener = (_req, res) => {
@@ -85,7 +86,11 @@ if (process.env.APP_RUNNER === '1') {
     };
 
     async function swapNow(): Promise<BuiltChildApp> {
-      if (swapping) return current!;
+      if (swapping) {
+        pendingReload = true;
+        console.log('[child] Reload deferred — will re-swap after current swap completes');
+        return current!;
+      }
       swapping = true;
 
       // ── Stale-handler cleanup ──
@@ -128,6 +133,12 @@ if (process.env.APP_RUNNER === '1') {
       if (prev) prev.close().catch(err => console.error('[child] background close error:', err));
 
       swapping = false;
+
+      if (pendingReload) {
+        pendingReload = false;
+        return swapNow();
+      }
+
       return next;
     }
 

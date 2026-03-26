@@ -131,6 +131,8 @@ Development server with webpack watch mode, async type checking, and an integrat
 | `bundlePackages` | `string[]` | `[]` | Explicit package names to force-bundle (e.g. `["lodash"]`) |
 | `nodeExternalsConfig` | `object` | `{}` | Override options for `webpack-node-externals` (see [Externals Configuration](#externals-configuration)) |
 | `webpackConfigPath` | `string` | — | Path to a JS/TS file exporting a `(config) => config` override function (see [Webpack Overrides](#webpack-overrides)) |
+| `serviceName` | `string` | — | Service name for config resolution and socket directory naming. Overrides the value from config YAML. |
+| `servePrefix` | `string` | `""` | URL path prefix for the devserver (e.g. `"agenshield"` → `/agenshield/`). Empty string means no prefix. Independent of `serviceName`. |
 
 #### How the Dev Server Works
 
@@ -166,7 +168,7 @@ The serve executor runs a multi-process architecture:
 The serve executor reads `config/config.{configEnv}.yaml` from the workspace root to resolve:
 
 - `port` — the port the dev server listens on (default: `3050`)
-- `serviceName` — used for URL prefix enforcement and socket naming
+- `serviceName` — used for socket directory naming and config resolution (does **not** affect URL prefix)
 
 ```yaml
 # config/config.development.yaml
@@ -174,7 +176,22 @@ port: 3050
 serviceName: my-api
 ```
 
-With `serviceName: my-api`, the devserver enforces that all requests start with `/my-api/`, mimicking production gateway behavior. Requests without the prefix return 404.
+#### URL Prefix
+
+By default, the devserver has **no URL prefix** — requests go directly to `/`. To simulate production gateway behavior where services are mounted at a path prefix, set `servePrefix` in your `project.json`:
+
+```json
+{
+  "serve": {
+    "executor": "@davnx/webpack:serve",
+    "options": {
+      "servePrefix": "my-api"
+    }
+  }
+}
+```
+
+With `servePrefix: "my-api"`, the devserver enforces that all requests start with `/my-api/` and strips the prefix before forwarding to the application. Requests without the prefix return 404.
 
 ## NestJS Bootstrap Contract
 

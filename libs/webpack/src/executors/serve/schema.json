@@ -91,7 +91,12 @@
     },
     "serviceName": {
       "type": "string",
-      "description": "Service name used as the URL prefix for the devserver (e.g. 'agenshield' → /agenshield/). Overrides the value from config YAML."
+      "description": "Service name for config resolution and socket directory naming. Overrides the value from config YAML. Does not affect URL prefix — use servePrefix for that."
+    },
+    "servePrefix": {
+      "type": "string",
+      "description": "URL path prefix for the devserver (e.g. 'agenshield' → /agenshield/). Empty string means no prefix. Independent of serviceName.",
+      "default": ""
     }
   },
   "required": ["entryFile", "tsConfigFile"]

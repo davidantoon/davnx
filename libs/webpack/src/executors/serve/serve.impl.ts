@@ -25,6 +25,7 @@ export interface ServeExecutorOptions {
   };
   webpackConfigPath?: string;
   serviceName?: string;
+  servePrefix?: string;
 }
 
 interface ExecutorContext {
@@ -70,6 +71,7 @@ async function* serveExecutor(
   if (options.serviceName) {
     serviceName = options.serviceName;
   }
+  const servePrefix = options.servePrefix ?? '';
 
   // Resolve entry/tsconfig relative to project root (absolute paths avoid
   // NxAppWebpackPlugin's normalizeRelativePaths collision with executor options)
@@ -134,6 +136,7 @@ async function* serveExecutor(
         ...process.env,
         PORT: String(port),
         SERVICE_NAME: serviceName,
+        SERVE_PREFIX: servePrefix,
         CHILD_COUNT: String(options.childCount || process.env.CHILD_COUNT || 1),
         BUNDLE_PATH: bundlePath,
       },
@@ -149,7 +152,7 @@ async function* serveExecutor(
       devserverProcess = null;
     });
 
-    console.log(`[serve] Devserver started on port ${port} (service: ${serviceName})`);
+    console.log(`[serve] Devserver started on port ${port} (service: ${serviceName}${servePrefix ? `, prefix: /${servePrefix}` : ''})`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
