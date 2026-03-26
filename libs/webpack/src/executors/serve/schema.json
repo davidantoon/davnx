@@ -97,6 +97,18 @@
       "type": "string",
       "description": "URL path prefix for the devserver (e.g. 'agenshield' → /agenshield/). Empty string means no prefix. Independent of serviceName.",
       "default": ""
+    },
+    "gateway": {
+      "type": "object",
+      "description": "Dev gateway middleware. Loads a user-provided JS module that can modify request headers before proxying (e.g., decode JWT, inject auth headers).",
+      "properties": {
+        "middleware": {
+          "type": "string",
+          "description": "Path to a JS file (relative to project root) that exports a function: (req: IncomingMessage, config: Record<string, unknown>) => void. Called before each request is proxied.",
+          "x-completion-type": "file"
+        }
+      },
+      "required": ["middleware"]
     }
   },
   "required": ["entryFile", "tsConfigFile"]

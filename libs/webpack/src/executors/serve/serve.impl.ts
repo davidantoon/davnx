@@ -26,6 +26,9 @@ export interface ServeExecutorOptions {
   webpackConfigPath?: string;
   serviceName?: string;
   servePrefix?: string;
+  gateway?: {
+    middleware: string;
+  };
 }
 
 interface ExecutorContext {
@@ -63,8 +66,9 @@ async function* serveExecutor(
   const configFilePath = path.join(workspaceRoot, 'config', `config.${configEnv}.yaml`);
   let port = 3050;
   let serviceName = context.projectName!;
+  let yamlConfig: Record<string, unknown> = {};
   if (fs.existsSync(configFilePath)) {
-    const yamlConfig = yaml.load(fs.readFileSync(configFilePath, 'utf8')) as Record<string, unknown>;
+    yamlConfig = yaml.load(fs.readFileSync(configFilePath, 'utf8')) as Record<string, unknown>;
     port = Number(yamlConfig.port) || port;
     serviceName = (yamlConfig.serviceName as string) || serviceName;
   }
@@ -72,6 +76,14 @@ async function* serveExecutor(
     serviceName = options.serviceName;
   }
   const servePrefix = options.servePrefix ?? '';
+
+  // Resolve gateway middleware
+  let gatewayMiddlewarePath: string | undefined;
+  let gatewayConfigJson: string | undefined;
+  if (options.gateway?.middleware) {
+    gatewayMiddlewarePath = path.resolve(projectRoot, options.gateway.middleware);
+    gatewayConfigJson = JSON.stringify(yamlConfig);
+  }
 
   // Resolve entry/tsconfig relative to project root (absolute paths avoid
   // NxAppWebpackPlugin's normalizeRelativePaths collision with executor options)
@@ -139,6 +151,8 @@ async function* serveExecutor(
         SERVE_PREFIX: servePrefix,
         CHILD_COUNT: String(options.childCount || process.env.CHILD_COUNT || 1),
         BUNDLE_PATH: bundlePath,
+        ...(gatewayMiddlewarePath && { GATEWAY_MIDDLEWARE: gatewayMiddlewarePath }),
+        ...(gatewayConfigJson && { GATEWAY_CONFIG: gatewayConfigJson }),
       },
       stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
       // Compiled JS — no @swc-node/register needed

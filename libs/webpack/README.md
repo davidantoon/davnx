@@ -133,6 +133,7 @@ Development server with webpack watch mode, async type checking, and an integrat
 | `webpackConfigPath` | `string` | — | Path to a JS/TS file exporting a `(config) => config` override function (see [Webpack Overrides](#webpack-overrides)) |
 | `serviceName` | `string` | — | Service name for config resolution and socket directory naming. Overrides the value from config YAML. |
 | `servePrefix` | `string` | `""` | URL path prefix for the devserver (e.g. `"agenshield"` → `/agenshield/`). Empty string means no prefix. Independent of `serviceName`. |
+| `gateway` | `object` | — | Gateway middleware configuration. See [Gateway Middleware](#gateway-middleware). |
 
 #### How the Dev Server Works
 
@@ -192,6 +193,79 @@ By default, the devserver has **no URL prefix** — requests go directly to `/`.
 ```
 
 With `servePrefix: "my-api"`, the devserver enforces that all requests start with `/my-api/` and strips the prefix before forwarding to the application. Requests without the prefix return 404.
+
+#### Gateway Middleware
+
+The devserver supports a pluggable gateway middleware that runs in the parent process before proxying each request to the NestJS application. This is useful for simulating an API gateway in local development (e.g., decoding JWTs and injecting auth headers).
+
+**Configuration:**
+
+```json
+{
+  "serve": {
+    "executor": "@davnx/webpack:serve",
+    "options": {
+      "gateway": {
+        "middleware": "./gateway-middleware.js"
+      }
+    }
+  }
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `middleware` | `string` | **Required.** Path to a JS file (relative to project root) that exports a middleware function. |
+
+**Middleware contract:**
+
+The JS file must export a function with the signature:
+
+```typescript
+(req: http.IncomingMessage, config: Record<string, unknown>) => void
+```
+
+- `req` — the incoming HTTP request. Mutate `req.headers` to inject headers before proxying.
+- `config` — the parsed contents of `config/config.{configEnv}.yaml`. The middleware decides which fields to use.
+
+**Example middleware** (JWT decode + header injection):
+
+```js
+// gateway-middleware.js
+module.exports = function gatewayMiddleware(req, config) {
+  const headers = req.headers;
+  const setIfAbsent = (name, value) => {
+    if (!headers[name]) headers[name] = value;
+  };
+
+  // Inject API key on all requests
+  if (config.apiKey) {
+    setIfAbsent('x-my-api-key', config.apiKey);
+  }
+
+  // Decode JWT and inject headers
+  const auth = headers['authorization'];
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    const parts = auth.slice(7).split('.');
+    if (parts.length === 3) {
+      try {
+        const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
+        if (payload.tenantId) setIfAbsent('x-tenant-id', payload.tenantId);
+        if (payload.sub) setIfAbsent('x-user-id', payload.sub);
+      } catch {}
+    }
+  }
+};
+```
+
+When active, the devserver logs:
+
+```
+[parent] Gateway middleware: ACTIVE (/path/to/gateway-middleware.js)
+```
+
+Headers set explicitly by the client are **not** overwritten by the middleware (use a `setIfAbsent` pattern as shown above).
 
 ## NestJS Bootstrap Contract
 

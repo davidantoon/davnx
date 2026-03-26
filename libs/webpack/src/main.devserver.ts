@@ -34,6 +34,43 @@ const BUNDLE_PATH = process.env.BUNDLE_PATH?.trim() || './main.js';
 const SERVICE_NAME = process.env.SERVICE_NAME || '';
 const SERVICE_PREFIX = process.env.SERVE_PREFIX ? `/${process.env.SERVE_PREFIX}` : '';
 
+// ----------------------------- Gateway Middleware (pluggable) -----------------
+type GatewayMiddleware = (req: http.IncomingMessage, config: Record<string, unknown>) => void;
+
+const GATEWAY_MIDDLEWARE_PATH = process.env.GATEWAY_MIDDLEWARE || '';
+const GATEWAY_CONFIG: Record<string, unknown> = (() => {
+  const raw = process.env.GATEWAY_CONFIG;
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+})();
+
+let gatewayMiddleware: GatewayMiddleware | null = null;
+if (GATEWAY_MIDDLEWARE_PATH) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require(GATEWAY_MIDDLEWARE_PATH);
+    gatewayMiddleware = typeof mod === 'function' ? mod : (typeof mod.default === 'function' ? mod.default : null);
+    if (!gatewayMiddleware) {
+      console.warn(`[gateway] ${GATEWAY_MIDDLEWARE_PATH} does not export a function, gateway disabled`);
+    }
+  } catch (err) {
+    console.error(`[gateway] Failed to load middleware from ${GATEWAY_MIDDLEWARE_PATH}:`, err);
+  }
+}
+
+function applyGatewayMiddleware(req: http.IncomingMessage): void {
+  if (!gatewayMiddleware) return;
+  try {
+    gatewayMiddleware(req, GATEWAY_CONFIG);
+  } catch (err) {
+    console.error('[gateway] Middleware error:', err);
+  }
+}
+
 // ----------------------------- Socket Helpers ---------------------------------
 const SOCK_DIR = path.join(os.tmpdir(), `${SERVICE_NAME || 'agencloud'}-devserver`);
 
@@ -440,6 +477,9 @@ if (process.env.APP_RUNNER === '1') {
         req.url = req.url.slice(SERVICE_PREFIX.length) || '/';
       }
 
+      // Gateway middleware: user-provided plugin modifies headers before proxying
+      applyGatewayMiddleware(req);
+
       // Proxy all other traffic using round-robin among healthy children
       const targetChild = pickChild();
       if (!targetChild) {
@@ -471,6 +511,9 @@ if (process.env.APP_RUNNER === '1') {
       console.log(`[parent] Listening on :${publicPort}`);
       if (SERVICE_PREFIX) {
         console.log(`[parent] Service prefix: "${SERVICE_PREFIX}" (enforced — requests without it will get 404)`);
+      }
+      if (gatewayMiddleware) {
+        console.log(`[parent] Gateway middleware: ACTIVE (${GATEWAY_MIDDLEWARE_PATH})`);
       }
       console.log(`POST http://localhost:${publicPort}/webpack/reload to trigger rolling swap/respawn`);
       await ensurePoolSize(CHILD_COUNT);
