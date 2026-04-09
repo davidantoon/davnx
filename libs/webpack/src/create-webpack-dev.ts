@@ -1,17 +1,14 @@
 import { NxAppWebpackPlugin } from '@nx/webpack/app-plugin';
 import * as path from 'node:path';
 import nodeExternals from 'webpack-node-externals';
+import { buildScopePatterns, type NodeExternalsConfig } from './build-scope-patterns';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const webpack = require('webpack');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 // const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
-export interface NodeExternalsConfig {
-  allowlist?: (string | RegExp)[];
-  additionalModuleDirs?: string[];
-  importType?: string;
-}
+export type { NodeExternalsConfig };
 
 export interface DevWebpackOptions {
   appName: string;
@@ -53,12 +50,6 @@ class DevServerReloadPlugin {
   }
 }
 
-function buildScopePatterns(orgScopes: string[]): { allowlistPatterns: RegExp[]; scopePrefixes: string[] } {
-  const allowlistPatterns = orgScopes.map((scope) => new RegExp(`^${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`));
-  const scopePrefixes = orgScopes.map((scope) => (scope.endsWith('/') ? scope : `${scope}/`));
-  return { allowlistPatterns, scopePrefixes };
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createDevWebpackConfig(options: DevWebpackOptions): Record<string, any> {
   const {
@@ -77,7 +68,7 @@ export function createDevWebpackConfig(options: DevWebpackOptions): Record<strin
     webpackConfigPath,
   } = options;
 
-  const { allowlistPatterns, scopePrefixes } = buildScopePatterns(orgScopes);
+  const { allowlistPatterns, scopePrefixes, scopePatterns } = buildScopePatterns(orgScopes);
 
   // Build combined allowlist: orgScopes + bundlePackages + user-provided
   const bundlePatterns = bundlePackages.map(
@@ -113,6 +104,12 @@ export function createDevWebpackConfig(options: DevWebpackOptions): Record<strin
           return callback();
         }
         if (request && scopePrefixes.some((prefix) => request.startsWith(prefix))) {
+          return callback();
+        }
+        if (request && scopePatterns.some((pattern) => pattern.test(request))) {
+          return callback();
+        }
+        if (request && bundlePatterns.some((pattern) => pattern.test(request))) {
           return callback();
         }
         if (request && !(request.startsWith('./') || request.startsWith('..'))) {

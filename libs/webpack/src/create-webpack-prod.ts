@@ -3,18 +3,13 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { globSync } from 'glob';
 import nodeExternals from 'webpack-node-externals';
+import { buildScopePatterns, type NodeExternalsConfig } from './build-scope-patterns';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 // const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Configuration = Record<string, any>;
-
-export interface NodeExternalsConfig {
-  allowlist?: (string | RegExp)[];
-  additionalModuleDirs?: string[];
-  importType?: string;
-}
 
 export interface ProdWebpackOptions {
   appName: string;
@@ -35,12 +30,6 @@ export interface ProdWebpackOptions {
   bundlePackages?: string[];
   nodeExternalsConfig?: NodeExternalsConfig;
   webpackConfigPath?: string;
-}
-
-function buildScopePatterns(orgScopes: string[]): { allowlistPatterns: RegExp[]; scopePrefixes: string[] } {
-  const allowlistPatterns = orgScopes.map((scope) => new RegExp(`${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`));
-  const scopePrefixes = orgScopes.map((scope) => (scope.endsWith('/') ? scope : `${scope}/`));
-  return { allowlistPatterns, scopePrefixes };
 }
 
 export function createProdWebpackConfig(options: ProdWebpackOptions): Configuration[] {
@@ -64,7 +53,7 @@ export function createProdWebpackConfig(options: ProdWebpackOptions): Configurat
     webpackConfigPath,
   } = options;
 
-  const { allowlistPatterns, scopePrefixes } = buildScopePatterns(orgScopes);
+  const { allowlistPatterns, scopePrefixes, scopePatterns } = buildScopePatterns(orgScopes);
 
   // Build combined allowlist: orgScopes + bundlePackages + user-provided
   const bundlePatterns = bundlePackages.map(
@@ -105,6 +94,12 @@ export function createProdWebpackConfig(options: ProdWebpackOptions): Configurat
       if (request && scopePrefixes.some((prefix) => request.startsWith(prefix))) {
         return callback();
       }
+      if (request && scopePatterns.some((pattern) => pattern.test(request))) {
+        return callback();
+      }
+      if (request && bundlePatterns.some((pattern) => pattern.test(request))) {
+        return callback();
+      }
       if (request && !(request.startsWith('./') || request.startsWith('..'))) {
         return callback(null, `commonjs ${request}`);
       }
@@ -125,7 +120,6 @@ export function createProdWebpackConfig(options: ProdWebpackOptions): Configurat
         target: 'node22',
         compiler: 'tsc',
         main,
-        additionalEntryPoints,
         externalDependencies: [],
         mergeExternals: true,
         memoryLimit,
@@ -142,7 +136,18 @@ export function createProdWebpackConfig(options: ProdWebpackOptions): Configurat
         },
         sourceMap: 'inline-source-map',
         progress: false,
-      })
+      }),
+      // Add additional entry points via webpack's EntryPlugin so they go through
+      // the same optimization/minification pipeline as the main entry.
+      // NxAppWebpackPlugin's additionalEntryPoints does not minify them properly.
+      ...additionalEntryPoints.map(
+        ({ entryName, entryPath }) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          apply(compiler: any) {
+            new compiler.webpack.EntryPlugin(compiler.context, entryPath, { name: entryName }).apply(compiler);
+          },
+        }),
+      ),
     ],
   };
 

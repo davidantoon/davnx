@@ -1,2 +1,3 @@
-export { createDevWebpackConfig, type DevWebpackOptions, type NodeExternalsConfig } from './create-webpack-dev';
+export { type NodeExternalsConfig, type ScopePatterns, buildScopePatterns } from './build-scope-patterns';
+export { createDevWebpackConfig, type DevWebpackOptions } from './create-webpack-dev';
 export { createProdWebpackConfig, type ProdWebpackOptions } from './create-webpack-prod';

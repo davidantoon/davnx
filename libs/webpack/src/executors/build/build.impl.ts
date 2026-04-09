@@ -64,7 +64,10 @@ async function* buildExecutor(
     main: resolvedMain,
     tsConfig: resolvedTsConfig,
     assets: options.assets || [],
-    additionalEntryPoints: options.additionalEntryPoints || [],
+    additionalEntryPoints: (options.additionalEntryPoints || []).map((ep) => ({
+      entryName: ep.entryName,
+      entryPath: path.resolve(projectRoot, ep.entryPath),
+    })),
     runtimeDependencies: options.runtimeDependencies || [],
     memoryLimit: options.memoryLimit || 8192,
     generatePackageJson: options.generatePackageJson !== false,
