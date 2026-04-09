@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/schema",
+  "$id": "DavnxWebpackServe",
   "version": 2,
   "outputCapture": "direct-nodejs",
   "continuous": true,
@@ -12,6 +13,7 @@
       "type": "string",
       "description": "Path to the main entry-point file, relative to project root.",
       "x-completion-type": "file",
+      "x-completion-glob": "**/*@(.js|.ts)",
       "x-priority": "important",
       "default": "./src/deployments/service/main.ts"
     },
@@ -19,6 +21,7 @@
       "type": "string",
       "description": "Path to the TypeScript configuration file, relative to project root.",
       "x-completion-type": "file",
+      "x-completion-glob": "tsconfig*.json",
       "x-priority": "important",
       "default": "./tsconfig.app.json"
     },
@@ -88,7 +91,8 @@
     "webpackConfigPath": {
       "type": "string",
       "description": "Path to a JS/TS file (relative to project root) that exports a (config) => config function for custom webpack overrides.",
-      "x-completion-type": "file"
+      "x-completion-type": "file",
+      "x-completion-glob": "webpack*@(.js|.ts)"
     },
     "serviceName": {
       "type": "string",
@@ -112,5 +116,6 @@
       "required": ["middleware"]
     }
   },
-  "required": ["entryFile", "tsConfigFile"]
+  "required": ["entryFile", "tsConfigFile"],
+  "additionalProperties": false
 }
