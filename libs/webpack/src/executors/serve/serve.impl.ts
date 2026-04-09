@@ -92,8 +92,11 @@ async function* serveExecutor(
   let devserverProcess: ChildProcess | null = null;
   let firstBuildComplete = false;
 
-  // Path to the devserver script (compiled JS in the same package)
-  const devserverScript = path.join(__dirname, '../../main.devserver.js');
+  // Path to the devserver script — resolve JS first, fall back to TS (local dev with swc-node)
+  const devserverScriptJs = path.join(__dirname, '../../main.devserver.js');
+  const devserverScriptTs = path.join(__dirname, '../../main.devserver.ts');
+  const runningFromSource = !fs.existsSync(devserverScriptJs) && fs.existsSync(devserverScriptTs);
+  const devserverScript = runningFromSource ? devserverScriptTs : devserverScriptJs;
   // Absolute path to the webpack bundle the devserver should load
   const bundlePath = path.join(outputPath, 'main.js');
 
@@ -119,6 +122,11 @@ async function* serveExecutor(
       return;
     }
 
+    const execArgv = ['--enable-source-maps'];
+    if (runningFromSource) {
+      execArgv.unshift('--require', '@swc-node/register');
+    }
+
     devserverProcess = fork(devserverScript, {
       cwd: workspaceRoot,
       env: {
@@ -132,8 +140,7 @@ async function* serveExecutor(
         ...(gatewayConfigJson && { GATEWAY_CONFIG: gatewayConfigJson }),
       },
       stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
-      // Compiled JS — no @swc-node/register needed
-      execArgv: ['--enable-source-maps'],
+      execArgv,
     });
 
     devserverProcess.on('exit', (code, signal) => {

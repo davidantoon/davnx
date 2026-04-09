@@ -5,6 +5,10 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "dependsOn": ["compile"],
+      "command": "node -e \"const fs=require('fs'),j=JSON.parse(fs.readFileSync('libs/webpack/executors.json','utf8'));for(const e of Object.values(j.executors)){e.implementation=e.implementation.replace('./src/','./');e.schema=e.schema.replace('./src/','./');};fs.writeFileSync('dist/libs/webpack/executors.json',JSON.stringify(j,null,2)+'\\n')\""
+    },
+    "compile": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
@@ -14,7 +18,6 @@
         "rootDir": "libs/webpack/src",
         "assets": [
           "libs/webpack/README.md",
-          "libs/webpack/executors.json",
           {
             "input": "libs/webpack",
             "glob": "package.json",

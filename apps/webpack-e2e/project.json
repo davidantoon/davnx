@@ -1,0 +1,13 @@
+{
+  "name": "webpack-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/webpack-e2e/src",
+  "projectType": "application",
+  "tags": ["scope:e2e"],
+  "targets": {
+    "e2e": {
+      "dependsOn": ["webpack:build"],
+      "command": "vitest run --config apps/webpack-e2e/vitest.config.ts"
+    }
+  }
+}

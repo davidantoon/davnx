@@ -1,0 +1,33 @@
+{
+  "name": "test-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/test-app/src",
+  "projectType": "application",
+  "tags": ["scope:e2e"],
+  "targets": {
+    "build": {
+      "executor": "@davnx/webpack:build",
+      "dependsOn": ["webpack:compile"],
+      "options": {
+        "entryFile": "./src/main.ts",
+        "tsConfigFile": "./tsconfig.app.json",
+        "workers": [
+          {
+            "name": "worker",
+            "entryPath": "./src/worker.ts"
+          }
+        ],
+        "generatePackageJson": true
+      }
+    },
+    "serve": {
+      "executor": "@davnx/webpack:serve",
+      "dependsOn": ["webpack:compile"],
+      "options": {
+        "entryFile": "./src/main.ts",
+        "tsConfigFile": "./tsconfig.app.json",
+        "childCount": 2
+      }
+    }
+  }
+}

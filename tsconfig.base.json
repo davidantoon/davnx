@@ -17,7 +17,10 @@
     "module": "commonjs",
     "lib": ["es2022"],
     "skipLibCheck": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@davnx/webpack": ["libs/webpack/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp", "dist"]
 }

@@ -363,6 +363,12 @@ if (process.env.APP_RUNNER === '1') {
       const sockPath = childSockPath(id);
       cleanupSock(sockPath); // remove stale socket
 
+      // When running from TS source (local dev), children need @swc-node/register too
+      const childExecArgv = ['--enable-source-maps'];
+      if (__filename.endsWith('.ts')) {
+        childExecArgv.unshift('--require', '@swc-node/register');
+      }
+
       const proc = fork(__filename, {
         env: {
           ...process.env,
@@ -371,8 +377,7 @@ if (process.env.APP_RUNNER === '1') {
           CHILD_DEBUG_PORT: CHILD_COUNT == 1 ? '1' : '0',
         },
         stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
-        // Compiled JS — no @swc-node/register needed
-        execArgv: ['--enable-source-maps']
+        execArgv: childExecArgv,
       });
       const info: ChildInfo = { id, proc, healthy: false, lastError: null };
 
