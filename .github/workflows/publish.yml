@@ -34,33 +34,26 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
-      - name: Determine versions from conventional commits
-        id: version
+      - name: Version, changelog, and build
+        id: release
         run: |
-          OUTPUT=$(npx nx release version --verbose 2>&1) || true
+          OUTPUT=$(npx nx release --skip-publish --verbose 2>&1) || true
           echo "$OUTPUT"
           if echo "$OUTPUT" | grep -q "No changes were detected"; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            npx nx run-many -t build
           fi
-
-      - name: Generate changelogs and GitHub releases
-        if: steps.version.outputs.changed == 'true'
-        run: npx nx release changelog --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build
-        if: steps.version.outputs.changed == 'true'
-        run: npx nx run-many -t build
-
       - name: Publish to npm
-        if: steps.version.outputs.changed == 'true'
+        if: steps.release.outputs.changed == 'true'
         run: npx nx release publish --verbose
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push version commits and tags
-        if: steps.version.outputs.changed == 'true'
+        if: steps.release.outputs.changed == 'true'
         run: git push --follow-tags
