@@ -3,33 +3,10 @@ import * as fs from 'node:fs';
 import { fork, ChildProcess } from 'node:child_process';
 import * as yaml from 'js-yaml';
 import { createDevWebpackConfig } from '../../create-webpack-dev';
+import type { ServeExecutorSchema } from './schema';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const webpack = require('webpack');
-
-export interface ServeExecutorOptions {
-  entryFile: string;
-  tsConfigFile: string;
-  outputPath?: string;
-  assets?: string[];
-  configEnv?: string;
-  memoryLimit?: number;
-  childCount?: number;
-  buildLibsFromSource?: boolean;
-  orgScopes?: string[];
-  bundlePackages?: string[];
-  nodeExternalsConfig?: {
-    allowlist?: string[];
-    additionalModuleDirs?: string[];
-    importType?: string;
-  };
-  webpackConfigPath?: string;
-  serviceName?: string;
-  servePrefix?: string;
-  gateway?: {
-    middleware: string;
-  };
-}
 
 interface ExecutorContext {
   root: string;
@@ -49,7 +26,7 @@ interface ExecutorContext {
  * 4. On shutdown, cleans up devserver and webpack watcher
  */
 async function* serveExecutor(
-  options: ServeExecutorOptions,
+  options: ServeExecutorSchema,
   context: ExecutorContext,
 ): AsyncGenerator<{ success: boolean; baseUrl?: string }> {
   process.env.NODE_ENV = 'development';

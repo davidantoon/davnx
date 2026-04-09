@@ -32,9 +32,22 @@
       "items": { "type": "string" },
       "default": []
     },
+    "workers": {
+      "type": "array",
+      "description": "Worker entry points. Each produces a self-contained, minified [name].js bundle.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Output filename (without .js extension)." },
+          "entryPath": { "type": "string", "description": "Path to the worker entry file. './' paths are relative to project root, otherwise relative to workspace root." }
+        },
+        "required": ["name", "entryPath"]
+      },
+      "default": []
+    },
     "additionalEntryPoints": {
       "type": "array",
-      "description": "Additional webpack entry points.",
+      "description": "Additional webpack entry points (deprecated, use 'workers' instead).",
       "items": {
         "type": "object",
         "properties": {

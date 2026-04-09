@@ -1,30 +1,10 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createProdWebpackConfig } from '../../create-webpack-prod';
+import type { BuildExecutorSchema } from './schema';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const webpack = require('webpack');
-
-export interface BuildExecutorOptions {
-  entryFile: string;
-  tsConfigFile: string;
-  outputPath?: string;
-  assets?: string[];
-  additionalEntryPoints?: Array<{ entryName: string; entryPath: string }>;
-  runtimeDependencies?: string[];
-  ormConfigPath?: string;
-  migrationsDir?: string;
-  memoryLimit?: number;
-  generatePackageJson?: boolean;
-  buildLibsFromSource?: boolean;
-  orgScopes?: string[];
-  bundlePackages?: string[];
-  nodeExternalsConfig?: {
-    allowlist?: string[];
-    additionalModuleDirs?: string[];
-    importType?: string;
-  };
-  webpackConfigPath?: string;
-}
 
 interface ExecutorContext {
   root: string;
@@ -38,7 +18,7 @@ interface ExecutorContext {
  * Production webpack build executor for NestJS applications.
  */
 async function* buildExecutor(
-  options: BuildExecutorOptions,
+  options: BuildExecutorSchema,
   context: ExecutorContext,
 ): AsyncGenerator<{ success: boolean; outfile?: string }> {
   process.env.NODE_ENV = 'production';
@@ -64,10 +44,10 @@ async function* buildExecutor(
     main: resolvedMain,
     tsConfig: resolvedTsConfig,
     assets: options.assets || [],
-    additionalEntryPoints: (options.additionalEntryPoints || []).map((ep) => ({
-      entryName: ep.entryName,
-      entryPath: path.resolve(projectRoot, ep.entryPath),
-    })),
+    additionalEntryPoints: [
+      ...(options.workers || []).map((w) => ({ entryName: w.name, entryPath: w.entryPath })),
+      ...(options.additionalEntryPoints || []),
+    ],
     runtimeDependencies: options.runtimeDependencies || [],
     memoryLimit: options.memoryLimit || 8192,
     generatePackageJson: options.generatePackageJson !== false,
@@ -106,6 +86,27 @@ async function* buildExecutor(
     if (stats.hasErrors()) {
       yield { success: false };
       return;
+    }
+  }
+
+  // Post-process: minify worker outputs (NxAppWebpackPlugin doesn't minify additional entries)
+  const workerEntries = options.workers || [];
+  if (workerEntries.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { minify } = require('terser');
+    for (const worker of workerEntries) {
+      const filePath = path.join(outputPath, `${worker.name}.js`);
+      if (fs.existsSync(filePath)) {
+        const code = fs.readFileSync(filePath, 'utf-8');
+        const result = await minify(code, {
+          keep_classnames: true,
+          sourceMap: { content: 'inline', url: 'inline' },
+        });
+        if (result.code) {
+          fs.writeFileSync(filePath, result.code);
+          console.info(`[build] minified ${worker.name}.js`);
+        }
+      }
     }
   }
 

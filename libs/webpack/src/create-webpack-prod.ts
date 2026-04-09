@@ -120,6 +120,7 @@ export function createProdWebpackConfig(options: ProdWebpackOptions): Configurat
         target: 'node22',
         compiler: 'tsc',
         main,
+        additionalEntryPoints,
         externalDependencies: [],
         mergeExternals: true,
         memoryLimit,
@@ -137,17 +138,6 @@ export function createProdWebpackConfig(options: ProdWebpackOptions): Configurat
         sourceMap: 'inline-source-map',
         progress: false,
       }),
-      // Add additional entry points via webpack's EntryPlugin so they go through
-      // the same optimization/minification pipeline as the main entry.
-      // NxAppWebpackPlugin's additionalEntryPoints does not minify them properly.
-      ...additionalEntryPoints.map(
-        ({ entryName, entryPath }) => ({
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          apply(compiler: any) {
-            new compiler.webpack.EntryPlugin(compiler.context, entryPath, { name: entryName }).apply(compiler);
-          },
-        }),
-      ),
     ],
   };
 
