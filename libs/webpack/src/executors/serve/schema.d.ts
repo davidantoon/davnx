@@ -1,3 +1,8 @@
+export interface WorkerEntryPoint {
+  name: string;
+  entryPath: string;
+}
+
 export interface NodeExternalsConfig {
   allowlist?: string[];
   additionalModuleDirs?: string[];
@@ -13,6 +18,7 @@ export interface ServeExecutorSchema {
   tsConfigFile: string;
   outputPath?: string;
   assets?: string[];
+  workers?: WorkerEntryPoint[];
   configEnv?: string;
   memoryLimit?: number;
   childCount?: number;

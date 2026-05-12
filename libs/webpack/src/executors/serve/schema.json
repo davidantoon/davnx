@@ -36,6 +36,19 @@
       "items": { "type": "string" },
       "default": []
     },
+    "workers": {
+      "type": "array",
+      "description": "Worker entry points. Each produces a separate [name].js bundle compiled alongside the main entry in watch mode.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Output filename (without .js extension)." },
+          "entryPath": { "type": "string", "description": "Path to the worker entry file. './' paths are relative to project root, otherwise relative to workspace root." }
+        },
+        "required": ["name", "entryPath"]
+      },
+      "default": []
+    },
     "configEnv": {
       "type": "string",
       "description": "Environment name for config YAML resolution (config.{env}.yaml).",

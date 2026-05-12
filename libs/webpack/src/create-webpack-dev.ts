@@ -25,6 +25,7 @@ export interface DevWebpackOptions {
   orgScopes?: string[];
   bundlePackages?: string[];
   nodeExternalsConfig?: NodeExternalsConfig;
+  additionalEntryPoints?: Array<{ entryName: string; entryPath: string }>;
   webpackConfigPath?: string;
 }
 
@@ -64,6 +65,7 @@ export function createDevWebpackConfig(options: DevWebpackOptions): Record<strin
     buildLibsFromSource = true,
     orgScopes = [],
     bundlePackages = [],
+    additionalEntryPoints = [],
     nodeExternalsConfig: userNodeExternalsConfig,
     webpackConfigPath,
   } = options;
@@ -126,7 +128,7 @@ export function createDevWebpackConfig(options: DevWebpackOptions): Record<strin
         target: 'node22',
         compiler: 'tsc',
         main,
-        additionalEntryPoints: [],
+        additionalEntryPoints,
         verbose: true,
         sourceMap: 'eval-cheap-module-source-map',
         mergeExternals: true,

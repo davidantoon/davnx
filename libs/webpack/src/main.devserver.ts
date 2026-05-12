@@ -71,6 +71,12 @@ function applyGatewayMiddleware(req: http.IncomingMessage): void {
   }
 }
 
+// ----------------------------- Worker Config ------------------------------------
+const WORKER_NAMES: string[] = (() => {
+  try { return JSON.parse(process.env.WORKERS || '[]'); }
+  catch { return []; }
+})();
+
 // ----------------------------- Socket Helpers ---------------------------------
 const SOCK_DIR = path.join(os.tmpdir(), `${SERVICE_NAME || 'agencloud'}-devserver`);
 
@@ -294,7 +300,7 @@ if (process.env.APP_RUNNER === '1') {
   const isJsonLog = (log:string)=>{
     return log.startsWith('{') && log.endsWith('}');
   }
-  const wireChildLogging = (info: ChildInfo) => {
+  const wireProcLogging = (proc: ChildProcess, tag: string) => {
     const prettyLog = prettyFactory({
       sync: true,
       colorize: true,
@@ -319,7 +325,7 @@ if (process.env.APP_RUNNER === '1') {
     const write = (kind: 'stdout' | 'stderr', line: string) => {
       const dest = kind === 'stdout' ? process.stdout : process.stderr;
       const log = isJsonLog(line) ? prettyLog(line) : `${line}\n`;
-      dest.write(`${tagFor(info.id)}${log}`);
+      dest.write(`${tag}${log}`);
     };
 
     const attach = (stream: NodeJS.ReadableStream | null | undefined, kind: 'stdout' | 'stderr') => {
@@ -329,9 +335,11 @@ if (process.env.APP_RUNNER === '1') {
       rl.on('close', () => {});
     };
 
-    attach(info.proc.stdout, 'stdout');
-    attach(info.proc.stderr, 'stderr');
+    attach(proc.stdout, 'stdout');
+    attach(proc.stderr, 'stderr');
   };
+
+  const wireChildLogging = (info: ChildInfo) => wireProcLogging(info.proc, tagFor(info.id));
 
   (async () => {
     // Ensure socket directory exists
@@ -452,6 +460,59 @@ if (process.env.APP_RUNNER === '1') {
       }));
     }
 
+    // ── Worker Management ──
+    type WorkerInfo = { name: string; proc: ChildProcess };
+    const workerProcesses: WorkerInfo[] = [];
+
+    function spawnWorkerProcess(name: string): WorkerInfo | null {
+      const bundleDir = path.dirname(
+        path.isAbsolute(BUNDLE_PATH) ? BUNDLE_PATH : path.resolve(BUNDLE_PATH),
+      );
+      const workerBundle = path.join(bundleDir, `${name}.js`);
+
+      if (!fs.existsSync(workerBundle)) {
+        console.error(`[parent] Worker "${name}" bundle not found: ${workerBundle}`);
+        return null;
+      }
+
+      const workerExecArgv = ['--enable-source-maps'];
+      if (__filename.endsWith('.ts')) {
+        workerExecArgv.unshift('--require', '@swc-node/register');
+      }
+
+      const proc = fork(workerBundle, {
+        env: process.env,
+        stdio: ['inherit', 'pipe', 'pipe', 'ipc'],
+        execArgv: workerExecArgv,
+      });
+
+      const info: WorkerInfo = { name, proc };
+      workerProcesses.push(info);
+      wireProcLogging(proc, `\x1b[35m[worker:${name}] \x1b[0m`);
+
+      proc.on('exit', (code, signal) => {
+        const clean = signal === 'SIGINT' || signal === 'SIGTERM' || code === 0;
+        if (!clean) {
+          console.error(`[parent] Worker "${name}" crashed (code=${code}, signal=${signal ?? 'none'})`);
+        }
+        const idx = workerProcesses.indexOf(info);
+        if (idx >= 0) workerProcesses.splice(idx, 1);
+      });
+
+      console.log(`[parent] Worker "${name}" started (pid=${proc.pid})`);
+      return info;
+    }
+
+    function restartWorkers() {
+      for (const w of [...workerProcesses]) {
+        try { w.proc.kill('SIGTERM'); } catch {}
+      }
+      workerProcesses.length = 0;
+      for (const name of WORKER_NAMES) {
+        spawnWorkerProcess(name);
+      }
+    }
+
     // Create ONE debounced forwarder that lives across requests
     const debouncedForwardReload = debounce(async () => {
       const healthies = healthyChildren();
@@ -460,6 +521,7 @@ if (process.env.APP_RUNNER === '1') {
         for (const c of healthies) c.proc.send?.({ type: 'reload' });
       }
       await respawnUnhealthy();
+      if (WORKER_NAMES.length > 0) restartWorkers();
     }, 200);
 
     // Start parent server (stable port)
@@ -522,11 +584,17 @@ if (process.env.APP_RUNNER === '1') {
       }
       console.log(`POST http://localhost:${publicPort}/webpack/reload to trigger rolling swap/respawn`);
       await ensurePoolSize(CHILD_COUNT);
+      for (const name of WORKER_NAMES) {
+        spawnWorkerProcess(name);
+      }
     });
 
     // Graceful shutdown of parent (children get SIGTERM)
     const shutdown = async (sig: string) => {
       console.log(`[${sig}] [parent] shutting down…`);
+      for (const w of workerProcesses) {
+        try { w.proc.kill('SIGTERM'); } catch {}
+      }
       for (const c of children) {
         try {
           c.proc.kill('SIGTERM');

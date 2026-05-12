@@ -32,6 +32,11 @@
             "input": "libs/webpack/src",
             "glob": "**/schema.d.ts",
             "output": "."
+          },
+          {
+            "input": "libs/webpack/skills",
+            "glob": "**/*.md",
+            "output": "skills"
           }
         ]
       }

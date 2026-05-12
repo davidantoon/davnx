@@ -69,6 +69,12 @@ async function* serveExecutor(
   const resolvedMain = path.resolve(projectRoot, entryFile);
   const resolvedTsConfig = path.resolve(projectRoot, tsConfigFile);
 
+  // Map workers to additional entry points
+  const additionalEntryPoints = (options.workers || []).map((w) => ({
+    entryName: w.name,
+    entryPath: path.resolve(projectRoot, w.entryPath),
+  }));
+
   // Build dev webpack config
   const config = createDevWebpackConfig({
     appName: context.projectName!,
@@ -77,6 +83,7 @@ async function* serveExecutor(
     main: resolvedMain,
     tsConfig: resolvedTsConfig,
     assets: options.assets || [],
+    additionalEntryPoints,
     port,
     serviceName,
     memoryLimit: options.memoryLimit || 8192,
@@ -138,6 +145,7 @@ async function* serveExecutor(
         BUNDLE_PATH: bundlePath,
         ...(gatewayMiddlewarePath && { GATEWAY_MIDDLEWARE: gatewayMiddlewarePath }),
         ...(gatewayConfigJson && { GATEWAY_CONFIG: gatewayConfigJson }),
+        ...((options.workers?.length) && { WORKERS: JSON.stringify(options.workers.map(w => w.name)) }),
       },
       stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
       execArgv,
