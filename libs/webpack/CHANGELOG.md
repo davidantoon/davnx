@@ -1,3 +1,13 @@
+## 1.2.1 (2026-11-26)
+
+### 🩹 Fixes
+
+- **webpack:** the dev server survives a redirect from the app ([bb4856c](https://github.com/davidantoon/davnx/commit/bb4856c))
+
+### ❤️ Thank You
+
+- David Antoon
+
 # Changelog
 
 ## 1.1.0
