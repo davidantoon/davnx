@@ -12,6 +12,8 @@ jobs:
   release:
     if: "!startsWith(github.event.head_commit.message, 'chore(release):')"
     runs-on: ubuntu-latest
+    # npm trusted publishing names this environment: a token from any other job is refused.
+    environment: release
     permissions:
       contents: write
       id-token: write
@@ -34,7 +36,7 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
-      - name: Version, changelog, and build
+      - name: Version and changelog
         id: release
         run: |
           OUTPUT=$(npx nx release --skip-publish --verbose 2>&1) || true
@@ -43,16 +45,20 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            npx nx run-many -t build
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build
+        run: npx nx run-many -t build
+
+      # Trusted publishing (OIDC) needs npm 11.5.1 or newer; Node 22 ships npm 10.
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      # Every run: a version already on npm is skipped, so one an earlier run tagged but could not publish goes out.
       - name: Publish to npm
-        if: steps.release.outputs.changed == 'true'
         run: npx nx release publish --verbose
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push version commits and tags
         if: steps.release.outputs.changed == 'true'
