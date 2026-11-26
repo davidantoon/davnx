@@ -558,8 +558,8 @@ if (process.env.APP_RUNNER === '1') {
       }
 
       proxy.web(req, res, {
+        // No autoRewrite: http-proxy url.parse()s the target to rewrite a redirect, and a socketPath target is an object.
         target: { socketPath: targetChild.socketPath! } as unknown as string,
-        autoRewrite: true,
         headers: {
           'x-proxy-child-id': String(targetChild.id)  // for logging/debugging
         }
