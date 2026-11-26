@@ -1,3 +1,13 @@
+## 1.2.2 (2026-11-26)
+
+### 🩹 Fixes
+
+- **webpack:** publish the built package, not its sources ([7811eda](https://github.com/davidantoon/davnx/commit/7811eda))
+
+### ❤️ Thank You
+
+- David Antoon
+
 ## 1.2.1 (2026-11-26)
 
 ### 🩹 Fixes
